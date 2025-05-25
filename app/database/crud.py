@@ -6,8 +6,8 @@ def create_employee(session: Session, employee: Employee):
     session.add(employee)
     session.commit()
     session.refresh(employee)
-    return employee
 
+    return {"message": "Employee created", "employee": employee}
 
 def update_attendance(session: Session, employee_id: int):
     today = datetime.today().date()
@@ -54,7 +54,13 @@ def delete_employee(session: Session, employee_id: int):
 def return_employee(session: Session, employee_id: int):
     stmt = select(Employee).where(Employee.id == employee_id)
     result = session.exec(stmt).first()
-    
     if not result:
         return {"error": "Employee not found."}
     return result
+
+
+
+
+def return_all_employee(session: Session):
+    stmt = select(Employee)
+    return session.exec(stmt).all()

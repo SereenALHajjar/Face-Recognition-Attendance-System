@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Face Recognition Attendance</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+      background-color: #f7f7f7;
+    }
+
+    video, canvas, img {
+      border: 2px solid #444;
+      margin: 1rem 0;
+      max-width: 100%;
+    }
+
+    button {
+      padding: 0.7rem 1.5rem;
+      font-size: 16px;
+      margin-top: 1rem;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #result, #status {
+      margin-top: 1.5rem;
+      font-size: 18px;
+    }
+
+    .employee-info {
+      margin-top: 2rem;
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      text-align: left;
+    }
+
+    .employee-info img {
+      max-width: 200px;
+      display: block;
+      margin: 1rem auto;
+    }
+
+    a#add-link {
+      display: inline-block;
+      margin-top: 2rem;
+      text-decoration: none;
+      color: #007BFF;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Face Recognition Attendance System</h1>
+
+  <video id="video" width="480" height="360" autoplay></video>
+  <canvas id="canvas" width="480" height="360" style="display: none;"></canvas>
+
+  <br>
+  <button onclick="captureAndSend()">Capture & Check</button>
+
+  <p id="status"></p>
+  <div id="result"></div>
+
+  <a href="/add" id="add-link">Register a new employee</a>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const status = document.getElementById('status');
+    const resultDiv = document.getElementById('result');
+
+    // Start camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error("Camera access error:", err);
+        status.textContent = "Cannot access the camera.";
+      });
+
+    function captureAndSend() {
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("img", blob, "photo.jpg"); // Changed 'file' to 'img' to match FastAPI param
+
+        status.textContent = "Checking identity...";
+
+        fetch("/face/compare", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.match) {
+            displayEmployee(data);
+          } else {
+            resultDiv.innerHTML = `<p>${data.message}</p>`;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          status.textContent = "Error sending photo.";
+        });
+      }, "image/jpeg");
+    }
+
+    function displayEmployee(emp) {
+      const imageUrl = emp.image_path;
+      const attendance = emp.attendance || { date: '—', entry_time: '—', departure_time: '—' };
+      resultDiv.innerHTML = `
+        <div class="employee-info">
+          <img src="${imageUrl}" alt="Employee photo">
+          <p><strong>Name:</strong> ${emp.name}</p>
+          <p><strong>Email:</strong> ${emp.email}</p>
+          <p><strong>Position:</strong> ${emp.position}</p>
+          <p><strong>Salary:</strong> $${emp.salary}</p>
+          <hr>
+          <p><strong>Last Attendance:</strong></p>
+          <p><strong>Date:</strong> ${attendance.date}</p>
+          <p><strong>Entry Time:</strong> ${attendance.entry_time || '—'}</p>
+          <p><strong>Departure Time:</strong> ${attendance.departure_time || '—'}</p>
+        </div>
+      `;
+      status.textContent = "Employee recognized.";
+    }
+  </script>
+
+</body>
+</html>
