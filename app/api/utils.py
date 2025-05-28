@@ -11,25 +11,21 @@ import app.models.schemas as schema
     
     
     
-def face_encoding(file_path):
+def load_file_and_encoding_face(file_path : str):
     img = face_recognition.load_image_file(file_path)
-    img = cv2.cvtColor(img , cv2.COLOR_BGR2RGB)
-    encodings = face_recognition.face_encodings(img)
-    if not encodings:
-        return None  # No face found
-    return encodings[0]
+    return encoding_face(img)
 
-def encode_file(img):
+def encoding_face(img):
     img = cv2.cvtColor(img , cv2.COLOR_BGR2RGB)
     encodings = face_recognition.face_encodings(img)
     if not encodings:
-        return None  # No face found
+        return None  
     return encodings[0]
 
 def compare_faces(cur_encoding):
     session = db.create_session() 
-    employees = crud.return_all_employee(session) 
-
+    employees = crud.return_all_employees(session) 
+    session.close() 
     for emp in employees:
         if emp.encoding_face:
             stored_encoding = np.array(json.loads(emp.encoding_face))

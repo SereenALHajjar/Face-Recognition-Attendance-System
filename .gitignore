@@ -1,2 +1,4 @@
 attendance_system.db
 .venv
+app/uploads
+__pycache__

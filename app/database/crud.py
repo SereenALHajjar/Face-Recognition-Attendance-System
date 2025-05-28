@@ -2,12 +2,14 @@ from sqlmodel import Session, select
 from app.models.schemas import Employee , Attendance
 from datetime import datetime
 
+class EmployeeNotFoundError(Exception):
+    pass
+
 def create_employee(session: Session, employee: Employee):
     session.add(employee)
     session.commit()
     session.refresh(employee)
-
-    return {"message": "Employee created", "employee": employee}
+    return employee
 
 def update_attendance(session: Session, employee_id: int):
     today = datetime.today().date()
@@ -44,23 +46,35 @@ def delete_employee(session: Session, employee_id: int):
     result = session.exec(stmt).first()
     
     if not result:
-        return {"error": "Employee not found."}
+        raise EmployeeNotFoundError()
     
     session.delete(result)
     session.commit()
-    return {"success": f"Employee with ID {employee_id} deleted."}
 
 
 def return_employee(session: Session, employee_id: int):
     stmt = select(Employee).where(Employee.id == employee_id)
     result = session.exec(stmt).first()
     if not result:
-        return {"error": "Employee not found."}
+        raise EmployeeNotFoundError()
     return result
 
 
 
 
-def return_all_employee(session: Session):
+def return_all_employees(session: Session):
     stmt = select(Employee)
     return session.exec(stmt).all()
+
+def update_employee(session: Session, employee_id: int, update_data: dict):
+    stmt = select(Employee).where(Employee.id == employee_id)
+    employee = session.exec(stmt).first()
+    if not employee:
+        raise EmployeeNotFoundError()
+    for key, value in update_data.items():
+        if hasattr(employee, key):
+            setattr(employee, key, value)
+    session.add(employee)
+    session.commit()
+    session.refresh(employee)
+    return employee

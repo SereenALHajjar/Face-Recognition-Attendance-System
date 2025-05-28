@@ -1,78 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Face Recognition Attendance</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 2rem;
+      margin: 0;
+      background: linear-gradient(to right, #dfe9f3, #ffffff);
+      color: #333;
       text-align: center;
-      background-color: #f7f7f7;
     }
 
-    video, canvas, img {
-      border: 2px solid #444;
-      margin: 1rem 0;
-      max-width: 100%;
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      color: #222;
+    }
+
+    video,
+    canvas {
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin: 1rem auto;
+      display: block;
     }
 
     button {
-      padding: 0.7rem 1.5rem;
+      padding: 0.8rem 1.6rem;
       font-size: 16px;
-      margin-top: 1rem;
-      cursor: pointer;
-      background-color: #4CAF50;
+      background-color: #007BFF;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
     }
 
-    #result, #status {
-      margin-top: 1.5rem;
-      font-size: 18px;
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #status {
+      margin-top: 1rem;
+      font-size: 16px;
+      color: #555;
     }
 
     .employee-info {
-      margin-top: 2rem;
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      display: inline-block;
+      margin: 2rem auto 1rem;
+      padding: 1.5rem;
+      max-width: 400px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.5s ease-in-out;
       text-align: left;
     }
 
     .employee-info img {
-      max-width: 200px;
       display: block;
-      margin: 1rem auto;
+      max-width: 180px;
+      margin: 0 auto 1rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .employee-info p {
+      margin: 0.4rem 0;
+      font-size: 15px;
     }
 
     a#add-link {
       display: inline-block;
       margin-top: 2rem;
       text-decoration: none;
-      color: #007BFF;
       font-weight: bold;
+      color: #007BFF;
+      transition: color 0.3s ease;
+    }
+
+    a#add-link:hover {
+      color: #004f99;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
+
 <body>
 
-  <h1>Face Recognition Attendance System</h1>
+  <h1>📸 Face Recognition Attendance System</h1>
 
   <video id="video" width="480" height="360" autoplay></video>
   <canvas id="canvas" width="480" height="360" style="display: none;"></canvas>
 
-  <br>
   <button onclick="captureAndSend()">Capture & Check</button>
 
   <p id="status"></p>
   <div id="result"></div>
 
-  <a href="/add" id="add-link">Register a new employee</a>
+  <a href="/add" id="add-link">➕ Register a New Employee</a>
 
   <script>
     const video = document.getElementById('video');
@@ -80,14 +122,12 @@
     const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
 
-    // Start camera
+    // Start the webcam
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-      })
+      .then(stream => video.srcObject = stream)
       .catch(err => {
         console.error("Camera access error:", err);
-        status.textContent = "Cannot access the camera.";
+        status.textContent = "❌ Cannot access the camera.";
       });
 
     function captureAndSend() {
@@ -95,32 +135,35 @@
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       canvas.toBlob(blob => {
         const formData = new FormData();
-        formData.append("img", blob, "photo.jpg"); // Changed 'file' to 'img' to match FastAPI param
+        formData.append("img", blob, "photo.jpg");
 
-        status.textContent = "Checking identity...";
+        status.textContent = "🔍 Checking identity...";
 
         fetch("/face/compare", {
           method: "POST",
           body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-          if (data.match) {
-            displayEmployee(data);
-          } else {
-            resultDiv.innerHTML = `<p>${data.message}</p>`;
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          status.textContent = "Error sending photo.";
-        });
+          .then(res => res.json())
+          .then(data => {
+            if (data.match) {
+              displayEmployee(data);
+              status.textContent = "✅ Employee recognized.";
+            } else {
+              resultDiv.innerHTML = `<p style="color:red;">${data.detail}</p>`;
+              status.textContent = "";
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            status.textContent = "❌ Error sending photo.";
+          });
       }, "image/jpeg");
     }
 
     function displayEmployee(emp) {
-      const imageUrl = emp.image_path;
       const attendance = emp.attendance || { date: '—', entry_time: '—', departure_time: '—' };
+      const imageUrl = emp.image_path;
+
       resultDiv.innerHTML = `
         <div class="employee-info">
           <img src="${imageUrl}" alt="Employee photo">
@@ -129,15 +172,15 @@
           <p><strong>Position:</strong> ${emp.position}</p>
           <p><strong>Salary:</strong> $${emp.salary}</p>
           <hr>
-          <p><strong>Last Attendance:</strong></p>
+          <p><strong>Last Attendance</strong></p>
           <p><strong>Date:</strong> ${attendance.date}</p>
           <p><strong>Entry Time:</strong> ${attendance.entry_time || '—'}</p>
           <p><strong>Departure Time:</strong> ${attendance.departure_time || '—'}</p>
         </div>
       `;
-      status.textContent = "Employee recognized.";
     }
   </script>
 
 </body>
+
 </html>

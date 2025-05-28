@@ -1,21 +1,130 @@
-<form id="employee-form" enctype="multipart/form-data" method="post">
-  <input type="text" name="name" placeholder="Name" required><br>
-  <input type="email" name="email" placeholder="Email" required><br>
-  <input type="number" name="salary" placeholder="Salary" required><br>
-  <input type="text" name="position" placeholder="Position" required><br>
-  <input type="file" name="photo" accept="image/*" required><br>
-  <button type="submit">Create Employee</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register Employee</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f0f4f8;
+      text-align: center;
+    }
 
-<script>
-document.getElementById('employee-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const response = await fetch('/employees', {
-    method: 'POST',
-    body: formData
-  });
-  const result = await response.json();
-  console.log(result);
-});
-</script>
+    form {
+      background-color: white;
+      padding: 2rem 2.5rem; /* Increased right padding for balance */
+      border-radius: 12px;
+      max-width: 420px;
+      margin: 0 auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h1::before {
+      content: '👤';
+      margin-right: 0.6rem;
+      font-size: 1.8rem;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0069d9;
+    }
+
+    #message {
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 2rem;
+      text-decoration: none;
+      color: #007BFF;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Register a New Employee</h1>
+
+  <form id="employee-form" enctype="multipart/form-data" method="post">
+    <input type="text" name="name" placeholder="Full Name" required>
+    <input type="email" name="email" placeholder="Email Address" required>
+    <input type="number" name="salary" placeholder="Monthly Salary (USD)" required>
+    <input type="text" name="position" placeholder="Job Position" required>
+    <input type="file" name="photo" accept="image/*" required>
+    <button type="submit">➕ Create Employee</button>
+  </form>
+
+  <p id="message"></p>
+
+  <a href="/">← Back to Home</a>
+
+  <script>
+    document.getElementById('employee-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const message = document.getElementById('message');
+
+      try {
+        const response = await fetch('/employees', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          message.textContent = "✅ Employee added successfully!";
+          message.style.color = "green";
+          form.reset();
+        } else {
+          message.textContent = result.message || "❌ Failed to add employee.";
+          message.style.color = "red";
+        }
+      } catch (err) {
+        console.error(err);
+        message.textContent = "❌ Error submitting the form.";
+        message.style.color = "red";
+      }
+    });
+  </script>
+
+</body>
+</html>
