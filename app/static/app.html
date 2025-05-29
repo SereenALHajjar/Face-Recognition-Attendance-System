@@ -27,6 +27,7 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       margin: 1rem auto;
       display: block;
+      /* filter: blur(7px);  Remove blur by default */
     }
 
     button {
@@ -98,7 +99,8 @@
     }
 
     a#add-link,
-    a#all-link {
+    a#all-link,
+    a#stats-link {
       display: inline-block;
       margin-top: 2rem;
       text-decoration: none;
@@ -108,7 +110,8 @@
     }
 
     a#add-link:hover,
-    a#all-link:hover {
+    a#all-link:hover,
+    a#stats-link:hover {
       color: #004f99;
     }
 
@@ -124,14 +127,16 @@
       }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
 </head>
 
 <body>
 
   <h1>📸 Face Recognition Attendance System</h1>
 
-  <video id="video" width="480" height="360" autoplay></video>
-  <canvas id="canvas" width="480" height="360" style="display: none;"></canvas>
+  <video id="video" width="480" height="360" autoplay style="display:none;"></video>
+  <canvas id="canvas" width="480" height="360"></canvas>
 
   <button onclick="captureAndSend()">Capture & Check</button>
 
@@ -141,6 +146,8 @@
   <a href="/add" id="add-link">➕ Register a New Employee</a>
   <br>
   <a href="/employees-page" id="all-link">👥 View All Employees</a>
+  <br>
+  <a href="/stats-page" id="stats-link">📊 View Attendance Statistics</a>
 
   <script>
     const video = document.getElementById('video');
@@ -148,17 +155,44 @@
     const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
 
-    // Start the webcam
+    // Start the webcam and BodyPix
+    let net;
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream)
+      .then(stream => {
+        video.srcObject = stream;
+        video.onloadeddata = () => {
+          setupBodyPix();
+        };
+      })
       .catch(err => {
         console.error("Camera access error:", err);
         status.textContent = "❌ Cannot access the camera.";
       });
 
+    async function setupBodyPix() {
+      net = await bodyPix.load();
+      startSegmentation();
+    }
+
+    async function startSegmentation() {
+      async function segmentFrame() {
+        if (video.readyState === 4) {
+          const segmentation = await net.segmentPerson(video, {
+            internalResolution: 'medium',
+            segmentationThreshold: 0.7,
+          });
+          bodyPix.drawBokehEffect(
+            canvas, video, segmentation, 15, 7, false
+          );
+        }
+        requestAnimationFrame(segmentFrame);
+      }
+      segmentFrame();
+    }
+
     function captureAndSend() {
       const context = canvas.getContext('2d');
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // The canvas already has the background blurred and person clear
       canvas.toBlob(blob => {
         const formData = new FormData();
         formData.append("img", blob, "photo.jpg");
