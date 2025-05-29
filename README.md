@@ -64,6 +64,10 @@ fastapi dev main.py
 ### Face Recognition
 - `POST /face/compare` - Compare face and mark attendance (returns match info)
 
+### Statistics APIs
+- `GET /stats/attendance-summary` - Get summary stats for each employee (total days, absences, late entries)
+- `GET /stats/attendance-averages` - Get average entry time, average departure time, and attendance rate for each employee
+
 ## Testing
 Run all tests with:
 ```sh
