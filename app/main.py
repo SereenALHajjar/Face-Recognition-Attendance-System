@@ -28,3 +28,7 @@ def serve_main(request: Request):
 @app.get("/add")
 def serve_add_employess(request: Request):
     return templates.TemplateResponse("add.html", {"request": request})
+
+@app.get("/employees-page")
+def serve_employees_page(request: Request):
+    return templates.TemplateResponse("employees.html", {"request": request})

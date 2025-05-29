@@ -61,7 +61,6 @@ def create_employee(
         shutil.copyfileobj(photo.file, buffer)
 
     encoding = load_file_and_encoding_face(str(file_path))
-    print(encoding)
     employee = Employee(
         name=name,
         email=email,

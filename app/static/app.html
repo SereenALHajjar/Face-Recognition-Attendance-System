@@ -53,29 +53,52 @@
 
     .employee-info {
       margin: 2rem auto 1rem;
-      padding: 1.5rem;
-      max-width: 400px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+      padding: 1.7rem 1.5rem 1.2rem 1.5rem;
+      max-width: 420px;
+      background: linear-gradient(135deg, #f8fafc 60%, #e3e9f7 100%);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0, 60, 120, 0.13), 0 1.5px 6px rgba(0, 0, 0, 0.04);
       animation: fadeIn 0.5s ease-in-out;
       text-align: left;
+      border: 1.5px solid #e0e7ef;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+
+    .employee-info:hover {
+      box-shadow: 0 12px 40px rgba(0, 60, 120, 0.18), 0 2px 8px rgba(0, 0, 0, 0.07);
+      background: linear-gradient(135deg, #f0f4fa 60%, #dbeafe 100%);
     }
 
     .employee-info img {
       display: block;
-      max-width: 180px;
-      margin: 0 auto 1rem;
-      border-radius: 10px;
-      border: 1px solid #ccc;
+      max-width: 160px;
+      margin: 0 auto 1.2rem;
+      border-radius: 12px;
+      border: 2.5px solid #b6c6e3;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+      background: #f3f6fa;
     }
 
     .employee-info p {
-      margin: 0.4rem 0;
-      font-size: 15px;
+      margin: 0.35rem 0;
+      font-size: 16px;
+      color: #2a2a2a;
+      letter-spacing: 0.01em;
     }
 
-    a#add-link {
+    .employee-info hr {
+      border: none;
+      border-top: 1.5px dashed #b6c6e3;
+      margin: 1.1rem 0 0.7rem 0;
+    }
+
+    .employee-info strong {
+      color: #3b5b8c;
+    }
+
+    a#add-link,
+    a#all-link {
       display: inline-block;
       margin-top: 2rem;
       text-decoration: none;
@@ -84,7 +107,8 @@
       transition: color 0.3s ease;
     }
 
-    a#add-link:hover {
+    a#add-link:hover,
+    a#all-link:hover {
       color: #004f99;
     }
 
@@ -115,6 +139,8 @@
   <div id="result"></div>
 
   <a href="/add" id="add-link">➕ Register a New Employee</a>
+  <br>
+  <a href="/employees-page" id="all-link">👥 View All Employees</a>
 
   <script>
     const video = document.getElementById('video');
