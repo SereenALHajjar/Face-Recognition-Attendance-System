@@ -20,7 +20,7 @@ A modern web-based attendance system using FastAPI, SQLModel, and face recogniti
 ### 1. Clone the repository
 ```sh
 # Windows PowerShell
-git clone <your-repo-url>
+git clone https://github.com/SereenALHajjar/Face-Recognition-Attendance-System.git
 cd FaceRecognitionAttendanceSystem
 ```
 
