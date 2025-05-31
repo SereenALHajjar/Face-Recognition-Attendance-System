@@ -78,3 +78,11 @@ def update_employee(session: Session, employee_id: int, update_data: dict):
     session.commit()
     session.refresh(employee)
     return employee
+
+
+def employee_exist(session: Session, email:str):
+    stmt = select(Employee).where(Employee.email == email)
+    employee = session.exec(stmt).first()
+    if not employee:
+        raise EmployeeNotFoundError()
+    return employee

@@ -105,13 +105,28 @@
   </style>
 </head>
 <body>
-  <h1>All Employees</h1>
-  <div id="employee-grid"></div>
-  <a href="/">← Back to Home</a>
+  <div id="user-info"></div>
+  <div id="auth-warning" style="color:#d32f2f;font-weight:bold;margin-bottom:1.5rem;display:none;"></div>
+  <div id="employee-content" style="display:none;">
+    <h1>All Employees</h1>
+    <div id="employee-grid"></div>
+    <a href="/">← Back to Home</a>
+  </div>
   <script>
     async function fetchAndShowAllEmployees() {
-      const res = await fetch('/employees/all');
+      const token = localStorage.getItem('token');
+      const res = await fetch('/employees/all', {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
+      if (res.status === 403) {
+        document.getElementById('auth-warning').style.display = '';
+        document.getElementById('auth-warning').textContent = '⛔ Access denied: Only admin or manager can view this page.';
+        document.getElementById('employee-content').style.display = 'none';
+        return;
+      }
       if (!res.ok) return;
+      document.getElementById('auth-warning').style.display = 'none';
+      document.getElementById('employee-content').style.display = '';
       const employees = await res.json();
       const container = document.getElementById('employee-grid');
       if (!Array.isArray(employees) || employees.length === 0) {
@@ -133,7 +148,11 @@
     async function deleteEmployee(event, id) {
       event.stopPropagation();
       if (!confirm('Are you sure you want to delete this employee?')) return;
-      const res = await fetch(`/employees/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/employees/${id}`, {
+        method: 'DELETE',
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
       if (res.status === 204) {
         // Remove the card from the grid
         const card = document.querySelector(`.employee-info[data-id='${id}']`);
@@ -141,6 +160,29 @@
       } else {
         alert('Failed to delete employee.');
       }
+    }
+
+    function showUserInfo() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const name = payload.name || payload.email || '';
+        if (name) {
+          document.getElementById('user-info').textContent = `👋 Welcome, ${name}`;
+        }
+      } catch {}
+    }
+    showUserInfo();
+
+    function isAdminOrManager() {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const pos = (payload.position || '').toLowerCase();
+        return pos === 'admin' || pos === 'manager';
+      } catch { return false; }
     }
 
     fetchAndShowAllEmployees();

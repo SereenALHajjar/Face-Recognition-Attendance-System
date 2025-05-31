@@ -98,6 +98,7 @@
       color: #3b5b8c;
     }
 
+    a#login-link,
     a#add-link,
     a#all-link,
     a#stats-link {
@@ -109,6 +110,7 @@
       transition: color 0.3s ease;
     }
 
+    a#login-link:hover,
     a#add-link:hover,
     a#all-link:hover,
     a#stats-link:hover {
@@ -135,6 +137,8 @@
 
   <h1>📸 Face Recognition Attendance System</h1>
 
+  <div id="user-info" style="margin-bottom:1.5rem;font-size:1.1rem;color:#3b5b8c;"></div>
+
   <video id="video" width="480" height="360" autoplay style="display:none;"></video>
   <canvas id="canvas" width="480" height="360"></canvas>
 
@@ -143,6 +147,8 @@
   <p id="status"></p>
   <div id="result"></div>
 
+  <a href="/login-page" id="login-link">🔐 Login</a>
+  <br>
   <a href="/add" id="add-link">➕ Register a New Employee</a>
   <br>
   <a href="/employees-page" id="all-link">👥 View All Employees</a>
@@ -239,6 +245,17 @@
         </div>
       `;
     }
+
+    async function showUserInfo() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const name = payload.name || payload.email || '';
+      if (name) {
+        document.getElementById('user-info').textContent = `👋 Welcome, ${name}`;
+      }
+    }
+    showUserInfo();
   </script>
 
 </body>

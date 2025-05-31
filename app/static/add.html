@@ -76,10 +76,17 @@
     a:hover {
       text-decoration: underline;
     }
+
+    #user-info {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      color: #3b5b8c;
+    }
   </style>
 </head>
 <body>
 
+  <div id="user-info"></div>
   <h1>Register a New Employee</h1>
 
   <form id="employee-form" enctype="multipart/form-data" method="post">
@@ -87,6 +94,7 @@
     <input type="email" name="email" placeholder="Email Address" required>
     <input type="number" name="salary" placeholder="Monthly Salary (USD)" required>
     <input type="text" name="position" placeholder="Job Position" required>
+    <input type="password" name="password" placeholder="Password" required>
     <input type="file" name="photo" accept="image/*" required>
     <button type="submit">➕ Create Employee</button>
   </form>
@@ -96,16 +104,29 @@
   <a href="/">← Back to Home</a>
 
   <script>
+    function showUserInfo() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const name = payload.name || payload.email || '';
+        if (name) {
+          document.getElementById('user-info').textContent = `👋 Welcome, ${name}`;
+        }
+      } catch {}
+    }
+
     document.getElementById('employee-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
       const formData = new FormData(form);
       const message = document.getElementById('message');
-
+      const token = localStorage.getItem('token');
       try {
         const response = await fetch('/employees', {
           method: 'POST',
-          body: formData
+          body: formData,
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
         });
 
         const result = await response.json();
@@ -124,6 +145,8 @@
         message.style.color = "red";
       }
     });
+
+    showUserInfo();
   </script>
 
 </body>

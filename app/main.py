@@ -46,3 +46,7 @@ def serve_employees_page(request: Request):
 @app.get("/stats-page")
 def serve_stats_page(request: Request):
     return templates.TemplateResponse("stats.html", {"request": request})
+
+@app.get("/login-page")
+def serve_login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Face Recognition Attendance</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e3e9f7, #f8fafc);
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+    }
+    .login-box {
+      background: #fff;
+      max-width: 350px;
+      margin: 4rem auto 0 auto;
+      padding: 2.2rem 2rem 1.5rem 2rem;
+      border-radius: 14px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.10);
+      text-align: left;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #3b5b8c;
+      font-size: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      color: #3b5b8c;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 0.7rem;
+      margin-bottom: 1.1rem;
+      border-radius: 8px;
+      border: 1.2px solid #b6c6e3;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 0.8rem;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #message {
+      margin-top: 1rem;
+      color: #d32f2f;
+      text-align: center;
+      font-size: 15px;
+      min-height: 1.2em;
+    }
+    a {
+      display: block;
+      margin-top: 2rem;
+      text-align: center;
+      color: #007BFF;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      color: #004f99;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>Login</h1>
+    <form id="login-form">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required />
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required />
+      <button type="submit">Login</button>
+    </form>
+    <div id="message"></div>
+    <a href="/">← Back to Home</a>
+  </div>
+  <script>
+    document.getElementById('login-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const message = document.getElementById('message');
+      message.textContent = '';
+      try {
+        // Send as query parameters
+        const url = `/employees/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+        if (res.ok && data.access_token) {
+          localStorage.setItem('token', data.access_token);
+          message.style.color = 'green';
+          message.textContent = 'Login successful! Redirecting...';
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        } else {
+          message.style.color = '#d32f2f';
+          message.textContent = data.detail || 'Login failed.';
+        }
+      } catch (err) {
+        message.style.color = '#d32f2f';
+        message.textContent = 'Network error.';
+      }
+    };
+  </script>
+</body>
+</html>

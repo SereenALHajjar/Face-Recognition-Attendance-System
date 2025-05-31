@@ -1,3 +1,4 @@
+from datetime import timedelta
 import io
 import json
 import os
@@ -8,6 +9,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, Upl
 from fastapi.responses import FileResponse
 import numpy as np
 from sqlmodel import Session
+from app.api import auth
+from app.api.auth import get_current_user
 from app.api.utils import load_file_and_encoding_face
 from app.database.db import get_session
 import app.database.crud as db
@@ -21,7 +24,11 @@ UPLOAD_FOLDER = Path("uploads")
 
 
 @router.get("/all", response_model=List[Employee])
-def get_all_employees(session: Session = Depends(get_session)):
+def get_all_employees(session: Session = Depends(get_session) , user_id: int = Depends(get_current_user)
+):
+    employee = db.return_employee(session, user_id)
+    if getattr(employee, 'position', '').lower() not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view all employees.")
     return db.return_all_employees(session)
 
 @router.get('/get-photo/{employee_id}', response_class=FileResponse)
@@ -44,10 +51,13 @@ def return_employee(employee_id : int, session:Session = Depends(get_session)):
     except EmployeeNotFoundError:
         raise HTTPException(status_code=404, detail="Employee not found.")
 
+
+
 @router.post("/", response_model=Employee, status_code=status.HTTP_200_OK)
 def create_employee(
     name: str = Form(...),
     email: str = Form(...),
+    password: str = Form(...),
     salary: float = Form(...),
     position: str = Form(...),
     photo: UploadFile = File(...), 
@@ -64,6 +74,7 @@ def create_employee(
     employee = Employee(
         name=name,
         email=email,
+        password=auth.hash_password(password),
         salary=salary,
         position=position,
         image_path=str(file_path), 
@@ -71,8 +82,25 @@ def create_employee(
     )
     return db.create_employee(session , employee) 
 
+
+@router.post("/login" , response_model = auth.Token)
+def login(email:str , password:str , session:Session = Depends(get_session)):
+    try:
+        employee = db.employee_exist(session , email)
+        if not auth.check_password(password, employee.password):
+            raise HTTPException(status_code=401 , detail="Password doesn't match")
+        token = auth.create_access_token(email , employee.id , timedelta(minutes= 30))
+        return {'access_token': token , 'token_type':'bearer'}
+    except EmployeeNotFoundError:
+        raise HTTPException(status_code=404 , detail="Employee not found.")
+
+
 @router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_employee(employee_id: int, session: Session = Depends(get_session)):
+def delete_employee(employee_id: int, session: Session = Depends(get_session), user_id: int = Depends(get_current_user)):
+    # Only allow if the current user is admin or manager
+    employee = db.return_employee(session, user_id)
+    if getattr(employee, 'position', '').lower() not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete employees.")
     try:
         db.delete_employee(session, employee_id)
         return Response(status_code=204)
@@ -83,8 +111,13 @@ def delete_employee(employee_id: int, session: Session = Depends(get_session)):
 def update_employee_api(
     employee_id: int,
     update_data: dict = Body(...),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    user_id: int = Depends(get_current_user)
 ):
+    # Only allow if the current user is admin or manager
+    employee = db.return_employee(session, user_id)
+    if getattr(employee, 'position', '').lower() not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized to update employees.")
     try:
         updated_employee = db.update_employee(session, employee_id, update_data)
         return updated_employee

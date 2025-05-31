@@ -1,14 +1,21 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 from app.database.db import get_session
 import app.database.crud as db
 from app.models.schemas import Employee, Attendance
 from datetime import time, datetime, timedelta
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
 @router.get("/attendance-summary")
-def attendance_summary(session: Session = Depends(get_session)):
+def attendance_summary(
+    session: Session = Depends(get_session),
+    user_id: int = Depends(get_current_user)
+):
+    employee = db.return_employee(session, user_id)
+    if getattr(employee, 'position', '').lower() not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view statistics.")
     employees = db.return_all_employees(session)
     stats = []
     for emp in employees:
@@ -33,7 +40,13 @@ def attendance_summary(session: Session = Depends(get_session)):
     return stats
 
 @router.get("/attendance-averages")
-def attendance_averages(session: Session = Depends(get_session)):
+def attendance_averages(
+    session: Session = Depends(get_session),
+    user_id: int = Depends(get_current_user)
+):
+    employee = db.return_employee(session, user_id)
+    if getattr(employee, 'position', '').lower() not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view statistics.")
     employees = db.return_all_employees(session)
     results = []
     for emp in employees:

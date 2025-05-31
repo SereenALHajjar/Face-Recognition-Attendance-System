@@ -74,33 +74,67 @@
   </style>
 </head>
 <body>
-  <h1>Attendance Statistics</h1>
-  <div id="stats-table"></div>
-  <h2 style="margin-top:2.5rem;">Averages & Attendance Rate</h2>
-  <div id="averages-table"></div>
-  <button id="download-csv">⬇️ Download CSV</button>
-  <br>
-  <a href="/">← Back to Home</a>
+  <div id="user-info"></div>
+  <div id="auth-warning" style="color:#d32f2f;font-weight:bold;margin-bottom:1.5rem;display:none;"></div>
+  <div id="stats-content" style="display:none;">
+    <h1>Attendance Statistics</h1>
+    <div id="stats-table"></div>
+    <h2 style="margin-top:2.5rem;">Averages & Attendance Rate</h2>
+    <div id="averages-table"></div>
+    <button id="download-csv">⬇️ Download CSV</button>
+    <br>
+    <a href="/">← Back to Home</a>
+  </div>
   <script>
-    async function fetchStats() {
-      const res = await fetch('/stats/attendance-summary');
+    function showUserInfo() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const name = payload.name || payload.email || '';
+        if (name) {
+          document.getElementById('user-info').textContent = `👋 Welcome, ${name}`;
+        }
+      } catch {}
+    }
+    showUserInfo();
+
+    async function fetchStatsAndHandleAuth() {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/stats/attendance-summary', {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
+      if (res.status === 403) {
+        document.getElementById('auth-warning').style.display = '';
+        document.getElementById('auth-warning').textContent = '⛔ Access denied: Only admin or manager can view this page.';
+        document.getElementById('stats-content').style.display = 'none';
+        return;
+      }
+      if (!res.ok) return;
+      document.getElementById('auth-warning').style.display = 'none';
+      document.getElementById('stats-content').style.display = '';
       const stats = await res.json();
       if (!Array.isArray(stats) || stats.length === 0) {
         document.getElementById('stats-table').innerHTML = '<p style="color:#888;">No statistics available.</p>';
-        return;
+      } else {
+        let html = `<table><tr><th>Name</th><th>Total Days</th><th>Absences</th><th>Late Entries</th></tr>`;
+        for (const row of stats) {
+          html += `<tr><td>${row.name}</td><td>${row.total_days}</td><td>${row.absences}</td><td>${row.late_entries}</td></tr>`;
+        }
+        html += '</table>';
+        document.getElementById('stats-table').innerHTML = html;
+        window.currentStats = stats; // Save for CSV
       }
-      let html = `<table><tr><th>Name</th><th>Total Days</th><th>Absences</th><th>Late Entries</th></tr>`;
-      for (const row of stats) {
-        html += `<tr><td>${row.name}</td><td>${row.total_days}</td><td>${row.absences}</td><td>${row.late_entries}</td></tr>`;
-      }
-      html += '</table>';
-      document.getElementById('stats-table').innerHTML = html;
-      window.currentStats = stats; // Save for CSV
+      // Fetch averages only if authorized
+      fetchAverages();
     }
-    fetchStats();
 
     async function fetchAverages() {
-      const res = await fetch('/stats/attendance-averages');
+      const token = localStorage.getItem('token');
+      const res = await fetch('/stats/attendance-averages', {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
+      if (!res.ok) return;
       const avgs = await res.json();
       if (!Array.isArray(avgs) || avgs.length === 0) {
         document.getElementById('averages-table').innerHTML = '<p style="color:#888;">No averages available.</p>';
@@ -113,7 +147,6 @@
       html += '</table>';
       document.getElementById('averages-table').innerHTML = html;
     }
-    fetchAverages();
 
     document.getElementById('download-csv').onclick = function() {
       const stats = window.currentStats || [];
@@ -132,6 +165,8 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     };
+
+    fetchStatsAndHandleAuth();
   </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ class Employee(SQLModel , table=True):
     salary : float 
     position : str 
     email : str 
+    password: str
     image_path : str 
     encoding_face : str|None 
     

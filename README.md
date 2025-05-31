@@ -3,10 +3,13 @@
 A modern web-based attendance system using FastAPI, SQLModel, and face recognition. Employees are registered with a photo, and attendance is marked by face recognition via webcam.
 
 ## Features
-- Register employees with photo, name, email, position, and salary
+- Register employees with photo, name, email, position, salary, and password
+- Secure login system with JWT authentication
+- Role-based access control (admin/manager/employee)
 - Mark attendance by face recognition (webcam capture)
-- View all employees in a modern grid UI
-- Delete employees from the UI
+- View all employees in a modern grid UI (admin/manager only)
+- Delete and update employees from the UI (admin/manager only)
+- Attendance statistics and averages (admin/manager only)
 - RESTful API for CRUD operations
 - Test suite for API endpoints
 
@@ -45,17 +48,20 @@ fastapi dev main.py
 
 ## Usage
 - **Home page:** Capture your face to mark attendance.
+- **Login:** Click "Login" to access admin/manager features.
 - **Register:** Click "Register a New Employee" to add a new employee.
-- **View All:** Click "View All Employees" to see all registered employees and delete them if needed.
+- **View All:** Click "View All Employees" (admin/manager only) to see all registered employees and delete them if needed.
+- **Statistics:** Click "View Attendance Statistics" (admin/manager only) to see attendance stats and download CSV.
 
 ## API Endpoints
 
 ### Employee APIs
 - `POST /employees/` - Register employee (multipart/form-data, returns Employee)
-- `GET /employees/all` - List all employees (returns List[Employee])
+- `POST /employees/login` - Login and get JWT token (returns access_token)
+- `GET /employees/all` - List all employees (admin/manager only)
 - `GET /employees/{employee_id}` - Get employee by ID (returns Employee)
-- `PUT /employees/{employee_id}` - Update employee (returns Employee)
-- `DELETE /employees/{employee_id}` - Delete employee (204 No Content)
+- `PUT /employees/{employee_id}` - Update employee (admin/manager only)
+- `DELETE /employees/{employee_id}` - Delete employee (admin/manager only)
 - `GET /employees/get-photo/{employee_id}` - Get employee photo (returns image file)
 
 ### Attendance APIs
@@ -64,7 +70,7 @@ fastapi dev main.py
 ### Face Recognition
 - `POST /face/compare` - Compare face and mark attendance (returns match info)
 
-### Statistics APIs
+### Statistics APIs (admin/manager only)
 - `GET /stats/attendance-summary` - Get summary stats for each employee (total days, absences, late entries)
 - `GET /stats/attendance-averages` - Get average entry time, average departure time, and attendance rate for each employee
 
